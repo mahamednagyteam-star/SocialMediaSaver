@@ -1,0 +1,9 @@
+[submodule "upstream/FetchIt"]
+	path = upstream/FetchIt
+	url = https://github.com/tharunbirla/FetchIt.git
+[submodule "upstream/Hazel"]
+	path = upstream/Hazel
+	url = https://github.com/SibtainOcn/Hazel.git
+[submodule "upstream/SuperX"]
+	path = upstream/SuperX
+	url = https://github.com/alexch33/super-video-downloader.git
