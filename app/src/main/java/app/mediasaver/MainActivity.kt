@@ -70,12 +70,31 @@ private fun MediaSaverApp(sharedUrl: String? = null) {
     var selectedQuality by remember { mutableStateOf("best") }
     var audioOnly by remember { mutableStateOf(false) }
     var selectedTab by remember { mutableStateOf("الرئيسية") }
+    var searchQuery by remember { mutableStateOf("") }
+    var searchResults by remember { mutableStateOf<List<MediaSearchResult>>(emptyList()) }
+    var isSearching by remember { mutableStateOf(false) }
+    var searchMessage by remember { mutableStateOf<String?>(null) }
     val accent = Color(0xFF27D6A0)
     val colors = if (darkMode) darkColorScheme(
         primary = accent, onPrimary = Color(0xFF08261D),
         background = Color(0xFF0C1117), surface = Color(0xFF151D26),
         secondary = Color(0xFF8BA7FF)
     ) else lightColorScheme(primary = Color(0xFF008F69), secondary = Color(0xFF405BB5))
+
+    fun startDownload(input: String) {
+        val detected = detectPlatform(input)
+        if (selectedPlatform != "الكل" && detected != selectedPlatform) {
+            selectedTab = "التنزيل"
+            status = "الرابط لا يطابق المنصة المختارة ($selectedPlatform). اختر المنصة الصحيحة أو «الكل»."
+            return
+        }
+        selectedTab = "التنزيل"
+        isDownloading = true
+        MediaDownloadEngine.download(context, input, selectedQuality, audioOnly) { message, finished ->
+            status = message
+            if (finished) isDownloading = false
+        }
+    }
 
     MaterialTheme(colorScheme = colors) {
         Scaffold(
@@ -104,7 +123,7 @@ private fun MediaSaverApp(sharedUrl: String? = null) {
             bottomBar = {
                 Surface(shadowElevation = 8.dp, color = MaterialTheme.colorScheme.surface) {
                     Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp), horizontalArrangement = Arrangement.SpaceAround) {
-                        listOf("الرئيسية" to "⌂", "التنزيل" to "↓", "الإعدادات" to "⚙").forEach { (tab, symbol) ->
+                        listOf("الرئيسية" to "⌂", "بحث" to "⌕", "التنزيل" to "↓", "الإعدادات" to "⚙").forEach { (tab, symbol) ->
                             TextButton(onClick = { selectedTab = tab }) {
                                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                     Text(symbol, style = MaterialTheme.typography.titleLarge, color = if (selectedTab == tab) accent else MaterialTheme.colorScheme.onSurfaceVariant)
@@ -121,6 +140,86 @@ private fun MediaSaverApp(sharedUrl: String? = null) {
                 verticalArrangement = Arrangement.spacedBy(18.dp)
             ) {
                 when (selectedTab) {
+                    "بحث" -> {
+                        Text("ابحث عن محتواك", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.ExtraBold)
+                        Text("اكتب اسم فيديو أو موضوع، ثم اختر منصة أو ابحث في الكل.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        OutlinedTextField(
+                            value = searchQuery,
+                            onValueChange = { searchQuery = it },
+                            modifier = Modifier.fillMaxWidth(),
+                            placeholder = { Text("مثال: تعلم الرسم للمبتدئين") },
+                            singleLine = true,
+                            shape = RoundedCornerShape(18.dp)
+                        )
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                            listOf("الكل", "YouTube", "TikTok", "Instagram", "Facebook", "X").forEach { platform ->
+                                Surface(
+                                    onClick = { selectedPlatform = platform },
+                                    shape = CircleShape,
+                                    color = if (selectedPlatform == platform) accent else MaterialTheme.colorScheme.surface
+                                ) {
+                                    Text(
+                                        platform,
+                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 9.dp),
+                                        color = if (selectedPlatform == platform) Color(0xFF08261D) else MaterialTheme.colorScheme.onSurface,
+                                        style = MaterialTheme.typography.labelSmall,
+                                        maxLines = 1
+                                    )
+                                }
+                            }
+                        }
+                        Button(
+                            onClick = {
+                                isSearching = true
+                                searchMessage = null
+                                searchResults = emptyList()
+                                MediaSearchEngine.search(searchQuery, selectedPlatform) { results, message ->
+                                    searchResults = results
+                                    searchMessage = message
+                                    isSearching = false
+                                }
+                            },
+                            enabled = !isSearching && searchQuery.isNotBlank(),
+                            modifier = Modifier.fillMaxWidth().height(52.dp),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = accent, contentColor = Color(0xFF08261D))
+                        ) {
+                            Text(if (isSearching) "جارٍ البحث…" else "⌕  ابحث في المنصات", fontWeight = FontWeight.Bold)
+                        }
+                        Text(
+                            "النتائج تعتمد على الصفحات العامة المفهرسة، وقد لا تشمل كل المنشورات أو الحسابات.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        if (isSearching) {
+                            Text("بنبحث عن نتائج عامة من المصادر المختارة…")
+                        } else if (searchMessage != null) {
+                            Text(searchMessage!!, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        searchResults.forEach { result ->
+                            Card(shape = RoundedCornerShape(20.dp)) {
+                                Column(
+                                    Modifier.fillMaxWidth().padding(16.dp),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Text(result.platform, style = MaterialTheme.typography.labelMedium, color = accent, fontWeight = FontWeight.Bold)
+                                    Text(result.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                                    if (result.snippet.isNotBlank()) {
+                                        Text(result.snippet, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    }
+                                    Text(result.url, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2)
+                                    Button(
+                                        onClick = { startDownload(result.url) },
+                                        enabled = !isDownloading,
+                                        modifier = Modifier.fillMaxWidth(),
+                                        shape = RoundedCornerShape(14.dp)
+                                    ) {
+                                        Text(if (isDownloading) "يوجد تنزيل قيد التشغيل" else "↓  تحميل هذا المحتوى")
+                                    }
+                                }
+                            }
+                        }
+                    }
                     "الإعدادات" -> {
                         Text("الإعدادات", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.ExtraBold)
                         Card(shape = RoundedCornerShape(22.dp)) {
@@ -152,7 +251,7 @@ private fun MediaSaverApp(sharedUrl: String? = null) {
                                 Text("كل وسائطك في مكان واحد", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.ExtraBold)
                                 Text("حمّل الفيديوهات والصور العامة من رابط واحد، واحفظها للرجوع إليها لاحقًا.", style = MaterialTheme.typography.bodyMedium)
                                 Row(horizontalArrangement = Arrangement.spacedBy(7.dp), verticalAlignment = Alignment.CenterVertically) {
-                                    listOf("الكل", "YouTube", "TikTok", "Instagram", "Facebook").forEach { platform ->
+                                    listOf("الكل", "YouTube", "TikTok", "Instagram", "Facebook", "X").forEach { platform ->
                                         Surface(
                                             onClick = { selectedPlatform = platform },
                                             shape = CircleShape,
@@ -197,20 +296,7 @@ private fun MediaSaverApp(sharedUrl: String? = null) {
                         }
                         Button(
                             enabled = !isDownloading,
-                            onClick = {
-                                val detected = detectPlatform(url)
-                                if (selectedPlatform != "الكل" && detected != selectedPlatform) {
-                                    selectedTab = "التنزيل"
-                                    status = "الرابط لا يطابق المنصة المختارة ($selectedPlatform). اختر المنصة الصحيحة أو اختر «الكل»."
-                                } else {
-                                    selectedTab = "التنزيل"
-                                    isDownloading = true
-                                    MediaDownloadEngine.download(context, url, selectedQuality, audioOnly) { message, finished ->
-                                        status = message
-                                        if (finished) isDownloading = false
-                                    }
-                                }
-                            },
+                            onClick = { startDownload(url) },
                             modifier = Modifier.fillMaxWidth().height(56.dp),
                             shape = RoundedCornerShape(18.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = accent, contentColor = Color(0xFF08261D))
@@ -245,6 +331,7 @@ private fun detectPlatform(rawUrl: String): String? {
         host == "tiktok.com" || host.endsWith(".tiktok.com") -> "TikTok"
         host == "instagram.com" || host.endsWith(".instagram.com") || host == "instagr.am" || host.endsWith(".instagr.am") -> "Instagram"
         host == "facebook.com" || host.endsWith(".facebook.com") || host == "fb.watch" -> "Facebook"
+        host == "x.com" || host.endsWith(".x.com") || host == "twitter.com" || host.endsWith(".twitter.com") -> "X"
         else -> null
     }
 }
