@@ -5,6 +5,7 @@
 ## الميزات
 - واجهة عربية مع الوضع الفاتح والداكن.
 - محرك تنزيل yt-dlp مدمج لاستخراج الوسائط من مواقع كثيرة، مع FFmpeg لدمج الصوت والفيديو عند الحاجة.
+- محاولات بديلة مقتبسة ومعدلة من محللات FetchIt القديمة لـ YouTube وInstagram وFacebook وX/Twitter عند فشل yt-dlp؛ تعتمد على خدمات عامة قد تتغير أو تتوقف.
 - عرض تقدم التنزيل وحالته داخل التطبيق.
 - حفظ الملفات في `Downloads/MediaSaver`.
 - قبول الروابط من الحافظة أو مشاركتها إلى التطبيق من تطبيقات أخرى (روابط HTTP/HTTPS).
@@ -12,12 +13,12 @@
 - الاحتفاظ بمصادر FetchIt وHazel وSuperX كـ Git submodules للمراجعة والتوثيق.
 
 ## دمج المحركات
-Hazel وSuperX يستخدمان yt-dlp-android في محرك التنزيل؛ لذلك يستخدم Media Saver المكتبة نفسها مباشرةً بدل نسخ تطبيقين كاملين ومكدسين مختلفين من المكتبات. محرك yt-dlp هو المحرك الأساسي داخل APK الآن. FetchIt يبقى مصدرًا مرجعيًا منفصلًا، ولم تُنسخ واجهاته أو خدمات الاستخراج الخاصة به إلى التطبيق.
+Hazel وSuperX يستخدمان yt-dlp-android في محرك التنزيل؛ لذلك يستخدم Media Saver المكتبة نفسها مباشرةً بدل نسخ تطبيقين كاملين ومكدسين مختلفين من المكتبات. محرك yt-dlp هو المحرك الأساسي داخل APK الآن. تمت إضافة طبقة احتياطية صغيرة مستندة إلى محللات FetchIt لبعض المواقع؛ أما واجهته الكاملة وبقية خدماته فلم تُدمج. Hazel وSuperX ممثلان عبر محرك yt-dlp المشترك بدل نسخ التطبيقين كاملين.
 
 المحرك يعتمد على دعم yt-dlp الحالي؛ قد تتوقف بعض المواقع أو تتطلب تحديثًا. لا يدعم التطبيق تجاوز تسجيل الدخول أو الوصول إلى محتوى خاص أو محمي.
 
 ## المصادر والتراخيص
-- [FetchIt](https://github.com/tharunbirla/FetchIt) — MIT، محفوظ كمصدر فرعي.
+- [FetchIt](https://github.com/tharunbirla/FetchIt) — MIT؛ المصدر محفوظ كمستودع فرعي، وطبقة fallback معدلة موجودة في `FetchItFallbackResolver.kt` مع نص الترخيص في `licenses/FETCHIT-MIT.txt`.
 - [Hazel](https://github.com/SibtainOcn/Hazel) — GPL-3.0-or-later، محفوظ كمصدر فرعي.
 - [SuperX Video Downloader](https://github.com/alexch33/super-video-downloader) — GPL-3.0، محفوظ كمصدر فرعي.
 - [yt-dlp-android](https://github.com/yausername/youtubedl-android) — GPL-3.0، مكتبة محرك التنزيل المدمجة.

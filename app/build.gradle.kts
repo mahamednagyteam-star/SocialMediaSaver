@@ -47,4 +47,6 @@ dependencies {
     // Shared yt-dlp engine used by Hazel/SuperX-derived workflows.
     implementation("io.github.junkfood02.youtubedl-android:library:0.18.1")
     implementation("io.github.junkfood02.youtubedl-android:ffmpeg:0.18.1")
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("org.jsoup:jsoup:1.18.3")
 }

@@ -11,10 +11,7 @@ import com.yausername.youtubedl_android.YoutubeDLRequest
 import java.io.File
 import java.util.concurrent.Executors
 
-/**
- * Unified yt-dlp downloader used by Hazel/SuperX-style workflows.
- * Runs off the UI thread and saves to the public Downloads/MediaSaver directory.
- */
+/** Unified downloader: yt-dlp first, with FetchIt's legacy site resolvers as a fallback. */
 object MediaDownloadEngine {
     private val executor = Executors.newSingleThreadExecutor()
     private val mainHandler = Handler(Looper.getMainLooper())
@@ -49,32 +46,15 @@ object MediaDownloadEngine {
                     error("تعذر إنشاء مجلد التنزيلات")
                 }
 
-                val request = YoutubeDLRequest(input).apply {
-                    addOption("--no-playlist")
-                    addOption("--newline")
-                    addOption("--no-mtime")
-                    addOption("-f", "bestvideo*+bestaudio/best")
-                    addOption("--merge-output-format", "mp4")
-                    addOption("-o", File(outputDirectory, "%(title).180B.%(ext)s").absolutePath)
-                }
-
-                YoutubeDL.getInstance().execute(request, null, false) { progress, eta, line ->
-                    val detail = line.trim().take(100)
-                    val message = buildString {
-                        append("جارٍ التنزيل: ")
-                        append(progress.toInt().coerceIn(0, 100))
-                        append("%")
-                        if (eta > 0) {
-                            append(" • متبقٍ تقريبًا ")
-                            append(eta)
-                            append(" ثانية")
-                        }
-                        if (detail.isNotEmpty()) {
-                            append("\n")
-                            append(detail)
-                        }
+                try {
+                    runYtDlp(input, outputDirectory, onStatus)
+                } catch (primaryError: Exception) {
+                    val fallbackUrl = runCatching { FetchItFallbackResolver.resolve(input) }.getOrNull()
+                    if (fallbackUrl.isNullOrBlank() || fallbackUrl == input) {
+                        throw primaryError
                     }
-                    postStatus(onStatus, message, false)
+                    postStatus(onStatus, "تعذر الاستخراج الأساسي؛ أجرب محلل FetchIt البديل…", false)
+                    runYtDlp(fallbackUrl, outputDirectory, onStatus)
                 }
 
                 postStatus(onStatus, "اكتمل التنزيل. ستجد الملف في Downloads/MediaSaver.", true)
@@ -83,6 +63,40 @@ object MediaDownloadEngine {
                     ?: "تحقق من الرابط والاتصال بالإنترنت."
                 postStatus(onStatus, "تعذر التنزيل: $reason", true)
             }
+        }
+    }
+
+    private fun runYtDlp(
+        url: String,
+        outputDirectory: File,
+        onStatus: (String, Boolean) -> Unit
+    ) {
+        val request = YoutubeDLRequest(url).apply {
+            addOption("--no-playlist")
+            addOption("--newline")
+            addOption("--no-mtime")
+            addOption("-f", "bestvideo*+bestaudio/best")
+            addOption("--merge-output-format", "mp4")
+            addOption("-o", File(outputDirectory, "%(title).180B.%(ext)s").absolutePath)
+        }
+
+        YoutubeDL.getInstance().execute(request, null, false) { progress, eta, line ->
+            val detail = line.trim().take(100)
+            val message = buildString {
+                append("جارٍ التنزيل: ")
+                append(progress.toInt().coerceIn(0, 100))
+                append("%")
+                if (eta > 0) {
+                    append(" • متبقٍ تقريبًا ")
+                    append(eta)
+                    append(" ثانية")
+                }
+                if (detail.isNotEmpty()) {
+                    append("\n")
+                    append(detail)
+                }
+            }
+            postStatus(onStatus, message, false)
         }
     }
 

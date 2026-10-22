@@ -23,3 +23,9 @@
 - GPL-3.0; tracked as an unmodified Git submodule under upstream/SuperX.
 
 The upstream submodules retain their own source files and license notices. Media Saver's new adapter code is Copyright (c) 2026 SocialMediaSaver contributors and distributed under GPL-3.0.
+
+## FetchIt fallback adapter
+- Source: https://github.com/tharunbirla/FetchIt
+- License: MIT; copyright notice: Copyright (c) 2021 Felvin Search.
+- Selected URL-resolution logic was adapted and modified in `FetchItFallbackResolver.kt` for fallback use only. The original FetchIt application is not embedded.
+- Full MIT license text is in `licenses/FETCHIT-MIT.txt`.
