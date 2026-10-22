@@ -66,6 +66,8 @@ private fun MediaSaverApp(sharedUrl: String? = null) {
     var status by remember { mutableStateOf("الصق رابط الفيديو أو الصورة لبدء التنزيل.") }
     var isDownloading by remember { mutableStateOf(false) }
     var selectedPlatform by remember { mutableStateOf("الكل") }
+    var selectedQuality by remember { mutableStateOf("best") }
+    var audioOnly by remember { mutableStateOf(false) }
     var selectedTab by remember { mutableStateOf("الرئيسية") }
     val accent = Color(0xFF27D6A0)
     val colors = if (darkMode) darkColorScheme(
@@ -171,12 +173,33 @@ private fun MediaSaverApp(sharedUrl: String? = null) {
                             trailingIcon = { TextButton(onClick = { clipboard.getText()?.text?.let { url = it.trim() } }) { Text("لصق") } },
                             singleLine = true, shape = RoundedCornerShape(18.dp)
                         )
+                        Text("نوع الملف والدقة", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                            listOf("best" to "أفضل جودة", "360" to "360p", "480" to "480p", "720" to "720p", "1080" to "1080p").forEach { (value, label) ->
+                                Surface(
+                                    onClick = { selectedQuality = value; audioOnly = false },
+                                    shape = CircleShape,
+                                    color = if (!audioOnly && selectedQuality == value) accent else MaterialTheme.colorScheme.surface
+                                ) {
+                                    Text(
+                                        label,
+                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 9.dp),
+                                        color = if (!audioOnly && selectedQuality == value) Color(0xFF08261D) else MaterialTheme.colorScheme.onSurface,
+                                        style = MaterialTheme.typography.labelSmall,
+                                        maxLines = 1
+                                    )
+                                }
+                            }
+                        }
+                        TextButton(onClick = { audioOnly = !audioOnly }) {
+                            Text(if (audioOnly) "✓ تنزيل الصوت فقط (بدون تحويل MP3)" else "♫ تنزيل الصوت فقط")
+                        }
                         Button(
                             enabled = !isDownloading,
                             onClick = {
                                 selectedTab = "التنزيل"
                                 isDownloading = true
-                                MediaDownloadEngine.download(context, url) { message, finished ->
+                                MediaDownloadEngine.download(context, url, selectedQuality, audioOnly) { message, finished ->
                                     status = message
                                     if (finished) isDownloading = false
                                 }
