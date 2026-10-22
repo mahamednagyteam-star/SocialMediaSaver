@@ -2,6 +2,7 @@ package app.mediasaver
 
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -197,11 +198,17 @@ private fun MediaSaverApp(sharedUrl: String? = null) {
                         Button(
                             enabled = !isDownloading,
                             onClick = {
-                                selectedTab = "التنزيل"
-                                isDownloading = true
-                                MediaDownloadEngine.download(context, url, selectedQuality, audioOnly) { message, finished ->
-                                    status = message
-                                    if (finished) isDownloading = false
+                                val detected = detectPlatform(url)
+                                if (selectedPlatform != "الكل" && detected != selectedPlatform) {
+                                    selectedTab = "التنزيل"
+                                    status = "الرابط لا يطابق المنصة المختارة ($selectedPlatform). اختر المنصة الصحيحة أو اختر «الكل»."
+                                } else {
+                                    selectedTab = "التنزيل"
+                                    isDownloading = true
+                                    MediaDownloadEngine.download(context, url, selectedQuality, audioOnly) { message, finished ->
+                                        status = message
+                                        if (finished) isDownloading = false
+                                    }
                                 }
                             },
                             modifier = Modifier.fillMaxWidth().height(56.dp),
@@ -227,5 +234,17 @@ private fun MediaSaverApp(sharedUrl: String? = null) {
                 }
             }
         }
+    }
+}
+
+
+private fun detectPlatform(rawUrl: String): String? {
+    val host = runCatching { Uri.parse(rawUrl.trim()).host?.lowercase().orEmpty() }.getOrDefault("")
+    return when {
+        host == "youtube.com" || host.endsWith(".youtube.com") || host == "youtu.be" -> "YouTube"
+        host == "tiktok.com" || host.endsWith(".tiktok.com") -> "TikTok"
+        host == "instagram.com" || host.endsWith(".instagram.com") || host == "instagr.am" || host.endsWith(".instagr.am") -> "Instagram"
+        host == "facebook.com" || host.endsWith(".facebook.com") || host == "fb.watch" -> "Facebook"
+        else -> null
     }
 }
