@@ -13,9 +13,10 @@ import com.yausername.youtubedl_android.YoutubeDLRequest
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
+import java.util.concurrent.Executor
 import java.util.concurrent.Executors
 
-/** Android adaptation of the yt-dlp download flow used by XREFS0/social-media-downloader. */
+/** Runs media downloads away from the UI thread and reports failures to the UI. */
 object MediaDownloadEngine {
     private val executor = Executors.newSingleThreadExecutor()
     private val mainHandler = Handler(Looper.getMainLooper())
@@ -32,45 +33,61 @@ object MediaDownloadEngine {
         if (input.isBlank() || uri == null ||
             uri.scheme?.lowercase() !in setOf("http", "https") || uri.host.isNullOrBlank()
         ) {
-            onStatus("أدخل رابطًا صحيحًا يبدأ بـ https:// أو http://", true)
+            postStatus(onStatus, "أدخل رابطًا صحيحًا يبدأ بـ https:// أو http://", true)
             return
         }
 
         postStatus(onStatus, "جارٍ تهيئة محرك التنزيل…", false)
-        executor.execute {
-            try {
-                val appContext = context.applicationContext
-                YoutubeDL.getInstance().init(appContext)
-
-                val outputDirectory = File(
-                    appContext.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS) ?: appContext.filesDir,
-                    "MediaSaver"
-                )
-                if (!outputDirectory.exists() && !outputDirectory.mkdirs()) error("تعذر تجهيز مجلد التنزيل المؤقت")
-                val before = outputDirectory.listFiles()?.associate { it.absolutePath to it.lastModified() }.orEmpty()
-
+        try {
+            executor.execute {
                 try {
-                    runYtDlp(input, outputDirectory, quality, audioOnly, onStatus)
-                } catch (primaryError: Exception) {
-                    val fallbackUrl = runCatching { FetchItFallbackResolver.resolve(input) }.getOrNull()
-                    if (fallbackUrl.isNullOrBlank() || fallbackUrl == input) throw primaryError
-                    postStatus(onStatus, "أجرب محللًا بديلًا لهذا الرابط…", false)
-                    runYtDlp(fallbackUrl, outputDirectory, quality, audioOnly, onStatus)
-                }
+                    val appContext = context.applicationContext
+                    // Some native dependency initialization failures are Errors rather than Exceptions.
+                    // Convert recoverable JVM-level failures into a visible message instead of silently
+                    // leaving the UI in a downloading state.
+                    try {
+                        YoutubeDL.getInstance().init(appContext)
+                    } catch (failure: Throwable) {
+                        throw IllegalStateException(
+                            "تعذر تشغيل محرك التنزيل على هذا الجهاز: ${failure.message ?: failure.javaClass.simpleName}",
+                            failure
+                        )
+                    }
 
-                val outputFile = outputDirectory.listFiles()
-                    ?.filter { it.isFile && !it.name.endsWith(".part") && !it.name.endsWith(".ytdl") }
-                    ?.filter { before[it.absolutePath] != it.lastModified() }
-                    ?.maxByOrNull { it.lastModified() }
-                    ?: error("اكتمل المحرك لكن لم أجد ملفًا نهائيًا لحفظه")
-                val saved = publishToDownloads(appContext, outputFile)
-                val kind = if (audioOnly) "الصوت" else "الفيديو"
-                if (saved) postStatus(onStatus, "اكتمل تنزيل $kind. افتح Downloads/MediaSaver للعثور على الملف.", true)
-                else postStatus(onStatus, "اكتمل التنزيل داخل مجلد التطبيق؛ تعذر نقله إلى Downloads.", true)
-            } catch (error: Exception) {
-                val reason = error.message?.lineSequence()?.firstOrNull()?.take(180) ?: "تحقق من الرابط والاتصال بالإنترنت."
-                postStatus(onStatus, "تعذر التنزيل: $reason", true)
+                    val outputDirectory = File(
+                        appContext.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS) ?: appContext.filesDir,
+                        "MediaSaver"
+                    )
+                    if (!outputDirectory.exists() && !outputDirectory.mkdirs()) error("تعذر تجهيز مجلد التنزيل المؤقت")
+                    val before = outputDirectory.listFiles()
+                        ?.associate { it.absolutePath to it.lastModified() }.orEmpty()
+
+                    try {
+                        runYtDlp(input, outputDirectory, quality, audioOnly, onStatus)
+                    } catch (primaryError: Exception) {
+                        val fallbackUrl = runCatching { FetchItFallbackResolver.resolve(input) }.getOrNull()
+                        if (fallbackUrl.isNullOrBlank() || fallbackUrl == input) throw primaryError
+                        postStatus(onStatus, "أجرب محللًا بديلًا لهذا الرابط…", false)
+                        runYtDlp(fallbackUrl, outputDirectory, quality, audioOnly, onStatus)
+                    }
+
+                    val outputFile = outputDirectory.listFiles()
+                        ?.filter { it.isFile && !it.name.endsWith(".part") && !it.name.endsWith(".ytdl") }
+                        ?.filter { before[it.absolutePath] != it.lastModified() }
+                        ?.maxByOrNull { it.lastModified() }
+                        ?: error("اكتمل المحرك لكن لم أجد ملفًا نهائيًا لحفظه")
+                    val saved = publishToDownloads(appContext, outputFile)
+                    val kind = if (audioOnly) "الصوت" else "الفيديو"
+                    if (saved) postStatus(onStatus, "اكتمل تنزيل $kind. افتح Downloads/MediaSaver للعثور على الملف.", true)
+                    else postStatus(onStatus, "اكتمل التنزيل داخل مجلد التطبيق؛ تعذر نقله إلى Downloads.", true)
+                } catch (failure: Throwable) {
+                    val reason = failure.message?.lineSequence()?.firstOrNull()?.take(180)
+                        ?: failure.javaClass.simpleName
+                    postStatus(onStatus, "تعذر التنزيل: $reason", true)
+                }
             }
+        } catch (failure: Throwable) {
+            postStatus(onStatus, "تعذر بدء مهمة التنزيل: ${failure.message ?: failure.javaClass.simpleName}", true)
         }
     }
 
@@ -128,7 +145,6 @@ object MediaDownloadEngine {
         onStatus: (String, Boolean) -> Unit
     ) {
         val format = if (audioOnly) {
-            // Download an existing audio stream directly; do not require FFmpeg to transcode to MP3.
             "bestaudio[ext=m4a]/bestaudio[ext=webm]/bestaudio/best"
         } else {
             val height = quality.toIntOrNull()
