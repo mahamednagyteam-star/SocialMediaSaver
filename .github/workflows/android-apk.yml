@@ -28,17 +28,10 @@ jobs:
           gradle-version: '8.9'
       - name: Build APK
         run: gradle --no-daemon assembleDebug
-      - name: Upload ARM64 APK
+      - name: Upload compact ARM64 APK
         uses: actions/upload-artifact@v4
         with:
-          name: media-saver-arm64-v8a
+          name: media-saver-arm64-v8a-compact
           path: app/build/outputs/apk/debug/app-arm64-v8a-debug.apk
-          if-no-files-found: error
-          retention-days: 14
-      - name: Upload ARMv7 APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: media-saver-armeabi-v7a
-          path: app/build/outputs/apk/debug/app-armeabi-v7a-debug.apk
           if-no-files-found: error
           retention-days: 14
