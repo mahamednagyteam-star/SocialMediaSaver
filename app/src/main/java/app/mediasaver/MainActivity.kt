@@ -7,6 +7,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -151,7 +152,7 @@ private fun MediaSaverApp(sharedUrl: String? = null) {
                             singleLine = true,
                             shape = RoundedCornerShape(18.dp)
                         )
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Row(modifier = Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                             listOf("الكل", "YouTube", "TikTok", "Instagram", "Facebook", "X").forEach { platform ->
                                 Surface(
                                     onClick = { selectedPlatform = platform },
@@ -250,7 +251,7 @@ private fun MediaSaverApp(sharedUrl: String? = null) {
                                 Text("مركز التنزيل", style = MaterialTheme.typography.labelLarge, color = accent, fontWeight = FontWeight.Bold)
                                 Text("كل وسائطك في مكان واحد", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.ExtraBold)
                                 Text("حمّل الفيديوهات والصور العامة من رابط واحد، واحفظها للرجوع إليها لاحقًا.", style = MaterialTheme.typography.bodyMedium)
-                                Row(horizontalArrangement = Arrangement.spacedBy(7.dp), verticalAlignment = Alignment.CenterVertically) {
+                                Row(modifier = Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(7.dp), verticalAlignment = Alignment.CenterVertically) {
                                     listOf("الكل", "YouTube", "TikTok", "Instagram", "Facebook", "X").forEach { platform ->
                                         Surface(
                                             onClick = { selectedPlatform = platform },
