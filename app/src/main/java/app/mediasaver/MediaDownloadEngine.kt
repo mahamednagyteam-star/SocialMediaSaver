@@ -8,7 +8,6 @@ import android.os.Environment
 import android.os.Handler
 import android.os.Looper
 import android.provider.MediaStore
-import com.yausername.ffmpeg.FFmpeg
 import com.yausername.youtubedl_android.YoutubeDL
 import com.yausername.youtubedl_android.YoutubeDLRequest
 import java.io.File
@@ -36,7 +35,6 @@ object MediaDownloadEngine {
             try {
                 val appContext = context.applicationContext
                 YoutubeDL.getInstance().init(appContext)
-                FFmpeg.getInstance().init(appContext)
 
                 val outputDirectory = File(
                     appContext.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS) ?: appContext.filesDir,
@@ -119,8 +117,9 @@ object MediaDownloadEngine {
             addOption("--no-playlist")
             addOption("--newline")
             addOption("--no-mtime")
-            addOption("-f", "bestvideo*+bestaudio/best")
-            addOption("--merge-output-format", "mp4")
+            // Prefer a single stream containing both audio and video; this avoids bundling FFmpeg
+            // and significantly reduces APK size at the cost of some maximum-quality formats.
+            addOption("-f", "best[ext=mp4][acodec!=none][vcodec!=none]/best[acodec!=none][vcodec!=none]/best")
             addOption("-o", File(outputDirectory, "%(title).180B.%(ext)s").absolutePath)
         }
         YoutubeDL.getInstance().execute(request, null, false) { progress, eta, line ->

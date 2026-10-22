@@ -4,7 +4,7 @@
 
 ## الميزات
 - واجهة عربية بتصميم داكن مستوحى من تطبيقات حفظ الوسائط، مع الوضع الفاتح والداكن.
-- محرك تنزيل yt-dlp مدمج لاستخراج الوسائط من مواقع كثيرة، مع FFmpeg لدمج الصوت والفيديو عند الحاجة.
+- محرك تنزيل yt-dlp مدمج لاستخراج الوسائط من مواقع كثيرة، مع اختيار مسار يحتوي على الصوت والفيديو معًا لتجنب تضمين FFmpeg وتقليل حجم APK؛ قد لا تتوفر أعلى جودة لبعض الفيديوهات.
 - محاولات بديلة مقتبسة ومعدلة من محللات FetchIt القديمة لـ YouTube وInstagram وFacebook وX/Twitter عند فشل yt-dlp؛ تعتمد على خدمات عامة قد تتغير أو تتوقف.
 - عرض تقدم التنزيل وحالته داخل التطبيق.
 - حفظ الملفات في `Downloads/MediaSaver`.
@@ -22,7 +22,7 @@ Hazel وSuperX يستخدمان yt-dlp-android في محرك التنزيل؛ ل
 - [Hazel](https://github.com/SibtainOcn/Hazel) — GPL-3.0-or-later، محفوظ كمصدر فرعي.
 - [SuperX Video Downloader](https://github.com/alexch33/super-video-downloader) — GPL-3.0، محفوظ كمصدر فرعي.
 - [yt-dlp-android](https://github.com/yausername/youtubedl-android) — GPL-3.0، مكتبة محرك التنزيل المدمجة.
-- FFmpeg package من مشروع yt-dlp-android — راجع إشعارات وترخيص المكتبة الأصلية.
+- لم تعد حزمة FFmpeg المنفصلة مضمنة في APK لتقليل حجمه؛ لذلك يفضّل التطبيق صيغ الفيديو التي تحتوي على الصوت والصورة في مسار واحد.
 
 راجع `UPSTREAMS.md` و`THIRD_PARTY_NOTICES.md`. بسبب دمج مكتبة مرخصة GPL-3.0، يُوزّع هذا الإصدار وفق GPL-3.0؛ ملف الترخيص موجود في `LICENSE`.
 
