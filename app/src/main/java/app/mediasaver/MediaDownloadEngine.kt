@@ -15,12 +15,18 @@ import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.util.concurrent.Executors
 
-/** Shared yt-dlp engine with app-private staging and MediaStore publishing. */
+/** Android adaptation of the yt-dlp download flow used by XREFS0/social-media-downloader. */
 object MediaDownloadEngine {
     private val executor = Executors.newSingleThreadExecutor()
     private val mainHandler = Handler(Looper.getMainLooper())
 
-    fun download(context: Context, rawUrl: String, onStatus: (String, Boolean) -> Unit) {
+    fun download(
+        context: Context,
+        rawUrl: String,
+        quality: String = "best",
+        audioOnly: Boolean = false,
+        onStatus: (String, Boolean) -> Unit
+    ) {
         val input = rawUrl.trim()
         val uri = runCatching { Uri.parse(input) }.getOrNull()
         if (input.isBlank() || uri == null ||
@@ -44,12 +50,12 @@ object MediaDownloadEngine {
                 val before = outputDirectory.listFiles()?.associate { it.absolutePath to it.lastModified() }.orEmpty()
 
                 try {
-                    runYtDlp(input, outputDirectory, onStatus)
+                    runYtDlp(input, outputDirectory, quality, audioOnly, onStatus)
                 } catch (primaryError: Exception) {
                     val fallbackUrl = runCatching { FetchItFallbackResolver.resolve(input) }.getOrNull()
                     if (fallbackUrl.isNullOrBlank() || fallbackUrl == input) throw primaryError
                     postStatus(onStatus, "أجرب محللًا بديلًا لهذا الرابط…", false)
-                    runYtDlp(fallbackUrl, outputDirectory, onStatus)
+                    runYtDlp(fallbackUrl, outputDirectory, quality, audioOnly, onStatus)
                 }
 
                 val outputFile = outputDirectory.listFiles()
@@ -58,7 +64,8 @@ object MediaDownloadEngine {
                     ?.maxByOrNull { it.lastModified() }
                     ?: error("اكتمل المحرك لكن لم أجد ملفًا نهائيًا لحفظه")
                 val saved = publishToDownloads(appContext, outputFile)
-                if (saved) postStatus(onStatus, "اكتمل التنزيل. افتح مجلد Downloads/MediaSaver للعثور على الملف.", true)
+                val kind = if (audioOnly) "الصوت" else "الفيديو"
+                if (saved) postStatus(onStatus, "اكتمل تنزيل $kind. افتح Downloads/MediaSaver للعثور على الملف.", true)
                 else postStatus(onStatus, "اكتمل التنزيل داخل مجلد التطبيق؛ تعذر نقله إلى Downloads.", true)
             } catch (error: Exception) {
                 val reason = error.message?.lineSequence()?.firstOrNull()?.take(180) ?: "تحقق من الرابط والاتصال بالإنترنت."
@@ -105,6 +112,7 @@ object MediaDownloadEngine {
         "webm" -> "video/webm"
         "mp3" -> "audio/mpeg"
         "m4a" -> "audio/mp4"
+        "opus", "ogg" -> "audio/ogg"
         "jpg", "jpeg" -> "image/jpeg"
         "png" -> "image/png"
         "webp" -> "image/webp"
@@ -112,20 +120,35 @@ object MediaDownloadEngine {
         else -> "application/octet-stream"
     }
 
-    private fun runYtDlp(url: String, outputDirectory: File, onStatus: (String, Boolean) -> Unit) {
+    private fun runYtDlp(
+        url: String,
+        outputDirectory: File,
+        quality: String,
+        audioOnly: Boolean,
+        onStatus: (String, Boolean) -> Unit
+    ) {
+        val format = if (audioOnly) {
+            // Download an existing audio stream directly; do not require FFmpeg to transcode to MP3.
+            "bestaudio[ext=m4a]/bestaudio[ext=webm]/bestaudio/best"
+        } else {
+            val height = quality.toIntOrNull()
+            if (height == null) {
+                "best[ext=mp4][acodec!=none][vcodec!=none]/best[acodec!=none][vcodec!=none]/best"
+            } else {
+                "best[height<=$height][ext=mp4][acodec!=none][vcodec!=none]/best[height<=$height][acodec!=none][vcodec!=none]/best[acodec!=none][vcodec!=none]/best"
+            }
+        }
         val request = YoutubeDLRequest(url).apply {
             addOption("--no-playlist")
             addOption("--newline")
             addOption("--no-mtime")
-            // Prefer a single stream containing both audio and video; this avoids bundling FFmpeg
-            // and significantly reduces APK size at the cost of some maximum-quality formats.
-            addOption("-f", "best[ext=mp4][acodec!=none][vcodec!=none]/best[acodec!=none][vcodec!=none]/best")
+            addOption("-f", format)
             addOption("-o", File(outputDirectory, "%(title).180B.%(ext)s").absolutePath)
         }
         YoutubeDL.getInstance().execute(request, null, false) { progress, eta, line ->
             val detail = line.trim().take(100)
             val message = buildString {
-                append("جارٍ التنزيل: ")
+                append(if (audioOnly) "جارٍ تنزيل الصوت: " else "جارٍ تنزيل الفيديو: ")
                 append(progress.toInt().coerceIn(0, 100))
                 append("%")
                 if (eta > 0) append(" • متبقٍ تقريبًا ").append(eta).append(" ثانية")
