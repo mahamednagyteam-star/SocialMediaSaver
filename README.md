@@ -1,2 +1,25 @@
-# SocialMediaSaver
-An Arabic-friendly media saver for downloading and organizing videos and images you own or are authorized to save, with download history, progress tracking, and Android APK builds via GitHub Actions.
+# Media Saver
+
+تطبيق أندرويد بواجهة عربية لحفظ ملفات الوسائط التي تملكها أو لديك إذن بتنزيلها.
+
+## اسم التطبيق
+- الاسم الظاهر: Media Saver
+- اسم المستودع: SocialMediaSaver
+- معرّف التطبيق: app.mediasaver
+
+## الميزات في النسخة الأولية
+- واجهة عربية قابلة للتمرير مع دعم الوضع الفاتح والداكن.
+- لصق رابط مباشر لملف صورة أو فيديو أو صوت أو مستند.
+- تنزيل عبر Download Manager المدمج في أندرويد.
+- حفظ الملفات في مجلد Downloads وإظهار إشعار عند اكتمال التنزيل.
+- التحقق الأساسي من الرابط وامتداد الملف قبل بدء التنزيل.
+- GitHub Actions لبناء APK تجريبي ورفعه كـ Artifact.
+
+## حدود النسخة الأولية
+هذه النسخة تدعم روابط الملفات المباشرة فقط، وليست بعدُ أداة لاستخراج الوسائط من صفحات جميع منصات التواصل. روابط صفحات Instagram وTikTok وYouTube وFacebook وغيرها قد لا تكون روابط ملفات مباشرة. استخدم ميزات التنزيل الرسمية للمنصة، واحفظ فقط المحتوى الذي تملكه أو لديك إذن بحفظه. لا يحاول التطبيق تجاوز تسجيل الدخول أو الحماية أو قيود المنصات.
+
+## البناء
+افتح المشروع في Android Studio، أو ادخل إلى تبويب Actions وشغّل سير العمل Android APK. عند نجاح البناء سيظهر Artifact باسم media-saver-debug-apk ويحتوي على app-debug.apk.
+
+## ملاحظة عن الإصدار
+هذا إصدار أولي للتجربة، ولم يتم بعد اختبار APK على أجهزة فعلية أو إضافة سجل تنزيلات داخل التطبيق.
