@@ -12,23 +12,22 @@ android {
         applicationId = "app.mediasaver"
         minSdk = 24
         targetSdk = 35
-        versionCode = 3
-        versionName = "1.1.1"
+        versionCode = 4
+        versionName = "1.1.2"
     }
 
-    // Build a smaller APK for the supported 64-bit ARM architecture.
+    // Build a universal APK so supported Android devices are not excluded
+    // by an ARM64-only package.
     splits {
         abi {
             isEnable = true
             reset()
-            include("arm64-v8a")
-            isUniversalApk = false
+            include("arm64-v8a", "armeabi-v7a", "x86_64")
+            isUniversalApk = true
         }
     }
 
     buildTypes {
-        // Keep the debug APK unshrunk while diagnosing runtime crashes in the
-        // native yt-dlp dependency. Release builds remain optimized.
         debug {
             isMinifyEnabled = false
             isShrinkResources = false
