@@ -16,7 +16,18 @@ android {
         versionName = "1.1.0"
 
         ndk {
-            abiFilters += listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
+            abiFilters += listOf("armeabi-v7a", "arm64-v8a")
+        }
+    }
+
+    // Produce smaller APKs per phone CPU architecture instead of bundling every native
+    // FFmpeg/yt-dlp binary into one very large APK.
+    splits {
+        abi {
+            isEnable = true
+            reset()
+            include("arm64-v8a", "armeabi-v7a")
+            isUniversalApk = false
         }
     }
 
