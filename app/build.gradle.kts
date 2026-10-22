@@ -15,9 +15,6 @@ android {
         versionCode = 2
         versionName = "1.1.0"
 
-        ndk {
-            abiFilters += listOf("armeabi-v7a", "arm64-v8a")
-        }
     }
 
     // Produce smaller APKs per phone CPU architecture instead of bundling every native
