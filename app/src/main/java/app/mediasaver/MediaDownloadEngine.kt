@@ -96,7 +96,9 @@ object MediaDownloadEngine {
         val legacyDir = File(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS) ?: context.filesDir, "MediaSaver")
         if (!legacyDir.exists()) legacyDir.mkdirs()
         val destination = File(legacyDir, source.name)
-        FileInputStream(source).use { input -> FileOutputStream(destination).use(input::copyTo) }
+        FileInputStream(source).use { input ->
+            FileOutputStream(destination).use { output -> input.copyTo(output) }
+        }
         return false
     }
 
