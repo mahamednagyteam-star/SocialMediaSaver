@@ -7,8 +7,6 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import org.jsoup.Jsoup
-import java.net.URLDecoder
-import java.nio.charset.StandardCharsets
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
@@ -55,7 +53,7 @@ internal object MediaSearchEngine {
                 val domain = platforms[platform] ?: continue
                 try {
                     val searchUrl = "https://html.duckduckgo.com/html/".toHttpUrl().newBuilder()
-                        .addQueryParameter("q", "site:$domain \"$cleaned\"")
+                        .addQueryParameter("q", "site:$domain $cleaned")
                         .build()
                     val request = Request.Builder()
                         .url(searchUrl)
@@ -102,7 +100,7 @@ internal object MediaSearchEngine {
         val uri = runCatching { Uri.parse(raw) }.getOrNull() ?: return raw
         val redirect = uri.getQueryParameter("uddg")
         if (!redirect.isNullOrBlank()) {
-            return runCatching { URLDecoder.decode(redirect, StandardCharsets.UTF_8.name()) }.getOrDefault(redirect)
+            return redirect
         }
         return raw
     }
