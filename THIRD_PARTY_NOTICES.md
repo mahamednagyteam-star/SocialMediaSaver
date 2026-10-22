@@ -7,8 +7,8 @@
 - This app's integration is a new adapter written for Media Saver; the upstream library's source and notices remain available at the linked project and through Maven Central.
 
 ## FFmpeg
-- Packaged through the yt-dlp-android FFmpeg artifact.
-- See the upstream project's licensing and build information before redistributing builds.
+- The separate FFmpeg artifact is not included in the current app build to reduce APK size.
+- Audio-only downloads save an available audio stream directly; MP3 transcoding and merging separate audio/video streams are not enabled.
 
 ## FetchIt
 - https://github.com/tharunbirla/FetchIt
@@ -29,3 +29,10 @@ The upstream submodules retain their own source files and license notices. Media
 - License: MIT; copyright notice: Copyright (c) 2021 Felvin Search.
 - Selected URL-resolution logic was adapted and modified in `FetchItFallbackResolver.kt` for fallback use only. The original FetchIt application is not embedded.
 - Full MIT license text is in `licenses/FETCHIT-MIT.txt`.
+
+
+## XREFS0 social-media-downloader
+- Source: https://github.com/XREFS0/social-media-downloader
+- License: MIT; copyright notice: Copyright (c) 2026 XREFS0.
+- The Android app adapts the upstream yt-dlp workflow, platform coverage, quality selection, and audio-only download approach. The Telegram bot and Telegram-specific handlers are not included.
+- Full MIT license text is in `licenses/XREFS0-SOCIAL-MEDIA-DOWNLOADER-MIT.txt`.
