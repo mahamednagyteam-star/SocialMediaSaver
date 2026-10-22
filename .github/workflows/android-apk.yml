@@ -12,27 +12,35 @@ jobs:
   build:
     name: Build universal debug APK
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 40
     steps:
       - name: Checkout source and upstream projects
         uses: actions/checkout@v4
         with:
           submodules: recursive
+
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
+
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: '8.9'
-      - name: Confirm universal APK configuration
-        run: echo "Building universal debug APK with supported ARM64, ARMv7, and x86_64 ABIs."
+          gradle-version: '8.13'
+
+      - name: Report build environment
+        run: |
+          java -version
+          gradle --version
+
       - name: Build APK
         run: gradle --no-daemon --stacktrace assembleDebug
+
       - name: Verify universal APK exists
         run: test -s app/build/outputs/apk/debug/app-universal-debug.apk
+
       - name: Upload universal APK
         uses: actions/upload-artifact@v4
         with:
