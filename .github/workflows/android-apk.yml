@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   build:
-    name: Build debug APK
+    name: Build universal debug APK
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -27,14 +27,14 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
-      - name: Confirm diagnostic build configuration
-        run: echo "Building diagnostic debug APK with minification and resource shrinking disabled."
+      - name: Confirm universal APK configuration
+        run: echo "Building universal debug APK with supported ARM64, ARMv7, and x86_64 ABIs."
       - name: Build APK
         run: gradle --no-daemon assembleDebug
-      - name: Upload compact ARM64 APK
+      - name: Upload universal APK
         uses: actions/upload-artifact@v4
         with:
-          name: media-saver-arm64-v8a-compact
-          path: app/build/outputs/apk/debug/app-arm64-v8a-debug.apk
+          name: media-saver-universal-debug
+          path: app/build/outputs/apk/debug/app-universal-debug.apk
           if-no-files-found: error
           retention-days: 14
