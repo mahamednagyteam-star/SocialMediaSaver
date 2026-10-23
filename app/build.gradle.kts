@@ -50,14 +50,16 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    kotlinOptions {
-        jvmTarget = "17"
-    }
-
     packaging {
         jniLibs {
             useLegacyPackaging = true
         }
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
     }
 }
 
@@ -69,7 +71,6 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling-preview")
     debugImplementation("androidx.compose.ui:ui-tooling")
 
-    // Latest published release currently available for this downloader library.
     implementation("io.github.junkfood02.youtubedl-android:library:0.18.1")
     implementation("com.squareup.okhttp3:okhttp:5.5.0")
     implementation("org.jsoup:jsoup:1.23.2")
