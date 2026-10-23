@@ -250,7 +250,14 @@ private fun MediaSaverApp(sharedUrl: String? = null) {
                             Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                                 Text("مركز التنزيل", style = MaterialTheme.typography.labelLarge, color = accent, fontWeight = FontWeight.Bold)
                                 Text("كل وسائطك في مكان واحد", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.ExtraBold)
-                                Text("حمّل الفيديوهات والصور العامة من رابط واحد، واحفظها للرجوع إليها لاحقًا.", style = MaterialTheme.typography.bodyMedium)
+                                Text("روابطك، خيارات الجودة، والتنزيلات في تجربة واحدة بسيطة.", style = MaterialTheme.typography.bodyMedium)
+                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    listOf("روابط مباشرة", "جودة مرنة", "حفظ منظم").forEach { feature ->
+                                        Surface(color = Color.White.copy(alpha = 0.08f), shape = RoundedCornerShape(50)) {
+                                            Text(feature, modifier = Modifier.padding(horizontal = 10.dp, vertical = 7.dp), color = Color(0xFFB9F5DF), style = MaterialTheme.typography.labelSmall)
+                                        }
+                                    }
+                                }
                                 Row(modifier = Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(7.dp), verticalAlignment = Alignment.CenterVertically) {
                                     listOf("الكل", "YouTube", "TikTok", "Instagram", "Facebook", "X").forEach { platform ->
                                         Surface(
@@ -275,7 +282,7 @@ private fun MediaSaverApp(sharedUrl: String? = null) {
                             singleLine = true, shape = RoundedCornerShape(18.dp)
                         )
                         Text("نوع الملف والدقة", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Row(modifier = Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                             listOf("best" to "أفضل جودة", "360" to "360p", "480" to "480p", "720" to "720p", "1080" to "1080p").forEach { (value, label) ->
                                 Surface(
                                     onClick = { selectedQuality = value; audioOnly = false },
